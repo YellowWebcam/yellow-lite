@@ -1,0 +1,6 @@
+webcamuploader.iml
+target/
+.idea/
+application-default.properties
+archive/
+images/
