@@ -57,7 +57,8 @@ the project root folder.
 
 ### Reference
 
-capture images
+Images are captured triggered by a Cron expression. Cron allows
+flexible time/date based triggers.
 
     # see http://www.quartz-scheduler.org/documentation/quartz-2.x/tutorials/crontrigger#format
     capture.cron=0 */5 6-21 * * ?
