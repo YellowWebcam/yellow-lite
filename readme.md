@@ -69,7 +69,7 @@ flexible time/date based triggers.
 To use [gphoto](http://www.gphoto.org/) as the image source, you need to install
 it first: `sudo apt-get install gphoto2`.
 
-We strongly recommend using ghoto to take images. While development you may
+We strongly recommend using ghoto to take images. While developing you may
 want to use your webcam to take test images. This requires streamer: 
 `sudo apt-get install streamer`.
 
@@ -91,7 +91,15 @@ top left corner of the bounding box used for cropping.
     image.crop.y=
     image.crop.height=
     image.crop.width=
-    
+
+As soon as you crop or resize the image, it will be loaded into memory 
+and converted back into the jpg format. By default a compression of 90%
+will be used. A smaller value will result in a smaller files. A value of 
+100 will not compress the image. 
+
+    # set quality to 90% after cropping/resizing the image
+    image.jpg.quality=90
+
 If activated, the `archive` folder keeps all unedited images once
 uploaded to the publishing channel. By default the archive is
 disabled.

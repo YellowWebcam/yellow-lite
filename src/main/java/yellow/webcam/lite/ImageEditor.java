@@ -1,5 +1,3 @@
-package yellow.webcam.lite;
-
 /* Copyright 2017 avisec ag
 
         Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,6 +12,8 @@ package yellow.webcam.lite;
         See the License for the specific language governing permissions and
         limitations under the License. */
 
+package yellow.webcam.lite;
+
 import org.imgscalr.Scalr;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,7 +21,12 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
+import javax.imageio.IIOImage;
 import javax.imageio.ImageIO;
+import javax.imageio.ImageWriteParam;
+import javax.imageio.ImageWriter;
+import javax.imageio.plugins.jpeg.JPEGImageWriteParam;
+import javax.imageio.stream.MemoryCacheImageOutputStream;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.math.BigDecimal;
@@ -37,25 +42,32 @@ public class ImageEditor {
     private final Integer cropY;
     private final Integer cropHeight;
     private final Integer cropWidth;
+    private final float jpgQuality;
 
     public ImageEditor(@Value("${image.resize.width}") String imageWidth,
                        @Value("${image.resize.height}") String imageHeight,
                        @Value("${image.crop.x}") String cropX,
                        @Value("${image.crop.y}") String cropY,
                        @Value("${image.crop.height}") String cropHeight,
-                       @Value("${image.crop.width}") String cropWidth) {
+                       @Value("${image.crop.width}") String cropWidth,
+                       @Value("${image.jpg.quality}") String jpgQuality) {
         this.width = parseInt(imageWidth);
         this.height = parseInt(imageHeight);
         this.cropX = parseInt(cropX);
         this.cropY = parseInt(cropY);
         this.cropHeight = parseInt(cropHeight);
         this.cropWidth = parseInt(cropWidth);
+        this.jpgQuality = parsePercent(jpgQuality);
         if (resizeIsActive()) {
             LOG.info("Resizing all images to {}x{}", this.width, this.height);
         }
         if (cropIsActive()) {
             LOG.info("Cropping all images to {}x{}", this.cropWidth, this.cropHeight);
         }
+    }
+
+    float parsePercent(String jpgQuality) {
+        return StringUtils.hasLength(jpgQuality) ? Float.parseFloat(jpgQuality) / 100 : 1f;
     }
 
     private int parseInt(String property) {
@@ -76,7 +88,6 @@ public class ImageEditor {
             if (resizeIsActive() || cropIsActive()) {
                 // Load from file
                 BufferedImage processedImage = ImageIO.read(originalImage);
-                int type = processedImage.getType() == 0 ? BufferedImage.TYPE_INT_ARGB : processedImage.getType();
                 // Calculate the target image size
                 Dimensions dimensions = calculateDimensions(processedImage.getWidth(), processedImage.getHeight());
                 // Resize Image
@@ -90,8 +101,12 @@ public class ImageEditor {
                 }
                 // BufferedImage to InputStream
                 ByteArrayOutputStream os = new ByteArrayOutputStream();
-                // TODO: allow configuration of jpg compression
-                ImageIO.write(processedImage, "jpg", os);
+                JPEGImageWriteParam jpegParams = new JPEGImageWriteParam(null);
+                jpegParams.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
+                jpegParams.setCompressionQuality(jpgQuality);
+                final ImageWriter writer = ImageIO.getImageWritersByFormatName("jpg").next();
+                writer.setOutput(new MemoryCacheImageOutputStream(os));
+                writer.write(null, new IIOImage(processedImage, null, null), jpegParams);
                 result = new ByteArrayInputStream(os.toByteArray());
             }
             return result;
