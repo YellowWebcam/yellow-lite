@@ -75,7 +75,7 @@ public class ImageEditorTest {
     @Test
     public void parsePercentWithDefault() {
         ImageEditor sut = createEmpty();
-        assertThat(sut.parsePercent("")).isCloseTo(0.9f, Offset.offset(0.001f));
+        assertThat(sut.parsePercent("")).isCloseTo(1f, Offset.offset(0.001f));
     }
 
     @Test
