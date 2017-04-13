@@ -23,7 +23,6 @@ import java.util.Date;
 @SpringBootApplication
 public class YellowLite {
 
-
     public static void main(String[] args) {
         ConfigurableApplicationContext context = SpringApplication.run(YellowLite.class, args);
         CamelSpringBootApplicationController applicationController = context.getBean(CamelSpringBootApplicationController.class);
@@ -32,11 +31,12 @@ public class YellowLite {
 
     private static final DateFormat DF = new SimpleDateFormat("yyyyMMdd'T'HHmmss");
     private static final DateFormat PANOMAX_DATE_FORMAT = new SimpleDateFormat("yyyy_MMdd_HHmmss");
-    private static final String IMAGE_NAME = "image-${bean:java.lang.System?method=currentTimeMillis}";
+    private static final String IMAGE_NAME = "YellowLite-${bean:yellow.webcam.lite.YellowLite?method=createCurrentTimestamp}";
     private static final Logger LOG = LoggerFactory.getLogger(YellowLite.class);
-    public static final String WEBCAM = "webcam";
-    public static final String GPHOTO = "gphoto";
-    public static final String[] SOURCES = {WEBCAM, GPHOTO};
+    private static final String FTP_OPTIONS = "&binary=true&passiveMode=true";
+    private static final String WEBCAM = "webcam";
+    private static final String GPHOTO = "gphoto";
+    private static final String[] SOURCES = {WEBCAM, GPHOTO};
 
     @Value("${capture.source}")
     private String captureSource = "";
@@ -54,6 +54,10 @@ public class YellowLite {
     private boolean panomaxSftp = false;
     @Value("${teleport.active}")
     private boolean teleportActive = false;
+
+    public String createCurrentTimestamp() {
+        return DF.format(new Date());
+    }
 
     @Bean
     RoutesBuilder myRouter() {
@@ -81,12 +85,13 @@ public class YellowLite {
                 from("file://{{capture.folder}}?include=.*\\.(jpeg|jpg)&" + fileAction)
                         .log("found new image: ${header.CamelFileName}")
                         .bean("imageEditor")
-                        // TODO change to multicast
+                        // TODO change to multicast http://camel.apache.org/multicast.html
                         .choice()
                         .when(is(s3Active)).to("direct:upload-s3")
                         .when(is(ftpActive)).to("direct:upload-ftp")
                         .when(is(sftpActive)).to("direct:upload-sftp")
                         .when(is(panomaxActive)).to("direct:upload-panomax")
+                        .when(is(teleportActive)).to("direct:upload-teleport")
                         .otherwise().log("No image destination found! Please check your configuration.");
 
                 if (s3Active) {
@@ -99,7 +104,7 @@ public class YellowLite {
                 if (ftpActive) {
                     from("direct:upload-ftp")
                             .setHeader("CamelFileName", constant("LatestImage.jpg"))
-                            .to("ftp://{{ftp.user}}@{{ftp.host}}/{{ftp.folder}}?password={{ftp.password}}&binary=true")
+                            .to("ftp://{{ftp.user}}@{{ftp.host}}/{{ftp.folder}}?password={{ftp.password}}" + FTP_OPTIONS)
                             .log("FTP upload to {{ftp.host}} finished");
                 }
                 if (sftpActive) {
@@ -112,13 +117,13 @@ public class YellowLite {
                     String protocol = panomaxSftp ? "sftp" : "ftp";
                     from("direct:upload-panomax")
                             .process().message(this::setPanomaxFilename)
-                            .to(protocol + "://{{panomax.user}}@admin.panomax.com/{{panomax.camera}}?password={{panomax.password}}&binary=true")
+                            .to(protocol + "://{{panomax.user}}@admin.panomax.com/{{panomax.camera}}?password={{panomax.password}}" + FTP_OPTIONS)
                             .log("Upload to " + protocol + "://{{panomax.user}}@admin.panomax.com/{{panomax.camera}}/${header.CamelFileName} finished");
                 }
                 if (teleportActive) {
                     from("direct:upload-teleport")
                             .setHeader("CamelFileName", constant("image.jpg"))
-                            .to("ftp://{{teleport.user}}@ftp.teleport.nu?password={{teleport.password}}&binary=true")
+                            .to("ftp://{{teleport.user}}@ftp.teleport.nu?password={{teleport.password}}" + FTP_OPTIONS)
                             .log("FTP upload to ftp.teleport.nu finished");
                 }
             }
