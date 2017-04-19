@@ -4,3 +4,4 @@ target/
 application-default.properties
 archive/
 images/
+/ImageToUpload.jpg

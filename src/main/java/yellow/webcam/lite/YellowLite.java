@@ -14,8 +14,8 @@
 
 package yellow.webcam.lite;
 
+import org.apache.camel.Exchange;
 import org.apache.camel.Message;
-import org.apache.camel.Predicate;
 import org.apache.camel.RoutesBuilder;
 import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.component.aws.s3.S3Constants;
@@ -30,9 +30,14 @@ import org.springframework.context.annotation.Bean;
 
 import java.io.File;
 import java.text.DateFormat;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @SpringBootApplication
 public class YellowLite {
@@ -43,7 +48,9 @@ public class YellowLite {
         applicationController.run();
     }
 
-    private static final DateFormat DF = new SimpleDateFormat("yyyyMMdd'T'HHmmss");
+    static final String HEADER_IMAGE_TIME_TAKEN = "ImageTimeTaken";
+    static final DateFormat DF = new SimpleDateFormat("yyyyMMdd'T'HHmmss");
+
     private static final DateFormat PANOMAX_DATE_FORMAT = new SimpleDateFormat("yyyy_MMdd_HHmmss");
     private static final String IMAGE_NAME = "YellowLite-${bean:yellow.webcam.lite.YellowLite?method=createCurrentTimestamp}";
     private static final Logger LOG = LoggerFactory.getLogger(YellowLite.class);
@@ -51,6 +58,7 @@ public class YellowLite {
     private static final String WEBCAM = "webcam";
     private static final String GPHOTO = "gphoto";
     private static final String[] SOURCES = {WEBCAM, GPHOTO};
+    private static final Pattern FILE_PATTERN = Pattern.compile("(\\w)+\\-(?<time>[0-9T]+)\\.(jpg|jpeg)");
 
     @Value("${capture.source}")
     private String captureSource = "";
@@ -96,69 +104,98 @@ public class YellowLite {
                     fileAction = "move=../archive";
                 }
 
+                List<String> destinations = new ArrayList<>();
+                addDestination(destinations, s3Active, "direct:upload-s3");
+                addDestination(destinations, ftpActive, "direct:upload-ftp");
+                addDestination(destinations, sftpActive, "direct:upload-sftp");
+                addDestination(destinations, panomaxActive, "direct:upload-panomax");
+                addDestination(destinations, teleportActive, "direct:upload-teleport");
+
+                if (destinations.isEmpty() && !imageArchive) {
+                    throw new RuntimeException("No destination active and archive is not activated, " +
+                            "images will not be save anywhere!");
+                } else if (destinations.isEmpty()) {
+                    LOG.warn("No destination active, images will only be saved in the archive!");
+                }
+
                 from("file://{{capture.folder}}?include=.*\\.(jpeg|jpg)&" + fileAction)
                         .log("found new image: ${header.CamelFileName}")
+                        .process().message(YellowLite.this::setImageDateHeader)
                         .bean("imageEditor")
-                        // TODO change to multicast http://camel.apache.org/multicast.html
-                        .choice()
-                        .when(is(s3Active)).to("direct:upload-s3")
-                        .when(is(ftpActive)).to("direct:upload-ftp")
-                        .when(is(sftpActive)).to("direct:upload-sftp")
-                        .when(is(panomaxActive)).to("direct:upload-panomax")
-                        .when(is(teleportActive)).to("direct:upload-teleport")
-                        .otherwise().log("No image destination found! Please check your configuration.");
+                        .multicast().parallelProcessing()
+                        .to(destinations.toArray(new String[destinations.size()]));
 
                 if (s3Active) {
                     from("direct:upload-s3")
-                            .process().message(this::createS3Key)
+                            .process().message(YellowLite.this::createS3Key)
                             .to("aws-s3://{{aws.s3.bucket}}?accessKey={{aws.s3.accessKey}}&secretKey={{aws.s3.secretKey}}")
                             .log("Upload to S3 finished");
                 }
 
                 if (ftpActive) {
                     from("direct:upload-ftp")
-                            .setHeader("CamelFileName", constant("LatestImage.jpg"))
+                            .setHeader(Exchange.FILE_NAME, constant("LatestImage.jpg"))
                             .to("ftp://{{ftp.user}}@{{ftp.host}}/{{ftp.folder}}?password={{ftp.password}}" + FTP_OPTIONS)
                             .log("FTP upload to {{ftp.host}} finished");
                 }
                 if (sftpActive) {
                     from("direct:upload-sftp")
-                            .setHeader("CamelFileName", constant("LatestImage.jpg"))
+                            .setHeader(Exchange.FILE_NAME, constant("LatestImage.jpg"))
                             .to("sftp://{{sftp.user}}@{{sftp.host}}/{{sftp.folder}}?password={{sftp.password}}")
                             .log("SFTP upload to {{sftp.host}} finished");
                 }
                 if (panomaxActive) {
                     String protocol = panomaxSftp ? "sftp" : "ftp";
                     from("direct:upload-panomax")
-                            .process().message(this::setPanomaxFilename)
+                            .process().message(YellowLite.this::setPanomaxFilename)
                             .to(protocol + "://{{panomax.user}}@admin.panomax.com/{{panomax.camera}}?password={{panomax.password}}" + FTP_OPTIONS)
                             .log("Upload to " + protocol + "://{{panomax.user}}@admin.panomax.com/{{panomax.camera}}/${header.CamelFileName} finished");
                 }
                 if (teleportActive) {
                     from("direct:upload-teleport")
-                            .setHeader("CamelFileName", constant("image.jpg"))
+                            .setHeader(Exchange.FILE_NAME, constant("image.jpg"))
                             .to("ftp://{{teleport.user}}@ftp.teleport.nu?password={{teleport.password}}" + FTP_OPTIONS)
                             .log("FTP upload to ftp.teleport.nu finished");
                 }
             }
 
-            private Predicate is(boolean config) {
-                return constant(Boolean.TRUE).isEqualTo(config);
-            }
-
-            private void setPanomaxFilename(Message message) {
-                message.setHeader("CamelFileName", PANOMAX_DATE_FORMAT.format(new Date()) + ".jpg");
-            }
-
-            void createS3Key(Message e) {
-                // TODO: init date at the beginning!
-                File file = e.getBody(File.class);
-                long lastModified = file != null ? file.lastModified() : System.currentTimeMillis();
-                String s3id = DF.format(lastModified);
-                e.setHeader(S3Constants.KEY, "image-" + s3id + ".jpg");
-                e.setHeader(S3Constants.CONTENT_TYPE, "image/jpeg");
-            }
         };
+    }
+
+    void setImageDateHeader(Message e) {
+        File file = e.getBody(File.class);
+        String fileName = file.getName();
+        Matcher matcher = FILE_PATTERN.matcher(fileName);
+        if (matcher.matches()) {
+            String time = matcher.group("time");
+            e.setHeader(HEADER_IMAGE_TIME_TAKEN, time);
+        } else {
+            LOG.warn("Cannot parse filename, defaulting image time taken to current time.");
+            e.setHeader(HEADER_IMAGE_TIME_TAKEN, DF.format(new Date()));
+        }
+    }
+
+    void setPanomaxFilename(Message message) {
+        Date time;
+        try {
+            time = DF.parse(message.getHeader(HEADER_IMAGE_TIME_TAKEN, String.class));
+        } catch (ParseException e) {
+            LOG.error("Unable to parse time header, using current time.");
+            time = new Date();
+        }
+        message.setHeader(Exchange.FILE_NAME, PANOMAX_DATE_FORMAT.format(time) + ".jpg");
+    }
+
+    void createS3Key(Message message) {
+        String s3id = message.getHeader(HEADER_IMAGE_TIME_TAKEN, String.class);
+        message.setHeader(S3Constants.KEY, "image-" + s3id + ".jpg");
+        message.setHeader(S3Constants.CONTENT_TYPE, "image/jpeg");
+    }
+
+    private void addDestination(List<String> destinations, boolean isActive, String destination) {
+        if (isActive) {
+            destinations.add(destination);
+        }
     }
 
 }

@@ -10,7 +10,7 @@ camera enclosings, privacy controls and anonymization of images, as well as
 time lapse videos.
 
 Yellow Lite contains a limited set of functionality of the Yellow Webcam and 
-allows you to resize, crop, and publish your images to one of the following 
+allows you to resize, crop, and publish your images to the following 
 destinations.
 
 - Your FTP or SFTP server
@@ -108,7 +108,8 @@ disabled.
 
 The following blocks outline the required configuration
 values to publish the images. Set the active flag on
-one of the blocks to true and fill all parameters below.
+the blocks you want to use for publishing to true and 
+fill all parameters of the section.
 
     # SFTP
     sftp.active=false

@@ -26,7 +26,6 @@ import javax.imageio.ImageIO;
 import javax.imageio.ImageWriteParam;
 import javax.imageio.ImageWriter;
 import javax.imageio.plugins.jpeg.JPEGImageWriteParam;
-import javax.imageio.stream.MemoryCacheImageOutputStream;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.math.BigDecimal;
@@ -82,9 +81,9 @@ public class ImageEditor {
         return cropHeight > 0 && cropWidth > 0;
     }
 
-    public InputStream resizeAndCrop(File originalImage) {
+    public File resizeAndCrop(File originalImage) {
         try {
-            InputStream result = new FileInputStream(originalImage);
+            File result = originalImage;
             if (resizeIsActive() || cropIsActive()) {
                 // Load from file
                 BufferedImage processedImage = ImageIO.read(originalImage);
@@ -99,15 +98,15 @@ public class ImageEditor {
                 if (cropIsActive()) {
                     processedImage = Scalr.crop(processedImage, cropX, cropY, cropWidth, cropHeight);
                 }
-                // BufferedImage to InputStream
-                ByteArrayOutputStream os = new ByteArrayOutputStream();
+                // BufferedImage to File
                 JPEGImageWriteParam jpegParams = new JPEGImageWriteParam(null);
                 jpegParams.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
                 jpegParams.setCompressionQuality(jpgQuality);
                 final ImageWriter writer = ImageIO.getImageWritersByFormatName("jpg").next();
-                writer.setOutput(new MemoryCacheImageOutputStream(os));
+                File file = new File("ImageToUpload.jpg");
+                writer.setOutput(ImageIO.createImageOutputStream(file));
                 writer.write(null, new IIOImage(processedImage, null, null), jpegParams);
-                result = new ByteArrayInputStream(os.toByteArray());
+                result = file;
             }
             return result;
         } catch (IOException e) {
