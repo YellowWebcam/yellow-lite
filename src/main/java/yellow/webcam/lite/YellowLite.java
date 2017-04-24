@@ -19,6 +19,7 @@ import org.apache.camel.Message;
 import org.apache.camel.RoutesBuilder;
 import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.component.aws.s3.S3Constants;
+import org.apache.camel.model.RouteDefinition;
 import org.apache.camel.spring.boot.CamelSpringBootApplicationController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -111,19 +112,21 @@ public class YellowLite {
                 addDestination(destinations, panomaxActive, "direct:upload-panomax");
                 addDestination(destinations, teleportActive, "direct:upload-teleport");
 
+                RouteDefinition route = from("file://{{capture.folder}}?include=.*\\.(jpeg|jpg)&" + fileAction)
+                        .log("found new image: ${header.CamelFileName}");
+
                 if (destinations.isEmpty() && !imageArchive) {
                     throw new RuntimeException("No destination active and archive is not activated, " +
                             "images will not be save anywhere!");
                 } else if (destinations.isEmpty()) {
                     LOG.warn("No destination active, images will only be saved in the archive!");
+                } else {
+                    route.process()
+                            .message(YellowLite.this::setImageDateHeader)
+                            .bean("imageEditor")
+                            .multicast().parallelProcessing()
+                            .to(destinations.toArray(new String[destinations.size()]));
                 }
-
-                from("file://{{capture.folder}}?include=.*\\.(jpeg|jpg)&" + fileAction)
-                        .log("found new image: ${header.CamelFileName}")
-                        .process().message(YellowLite.this::setImageDateHeader)
-                        .bean("imageEditor")
-                        .multicast().parallelProcessing()
-                        .to(destinations.toArray(new String[destinations.size()]));
 
                 if (s3Active) {
                     from("direct:upload-s3")
