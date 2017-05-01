@@ -32,10 +32,10 @@ Binary releases are available on [photo-webcam.shop/en/yellow-lite](https://foto
 
 ## Development
 
-Yellow Lite built with [Spring Boot](https://projects.spring.io/spring-boot/) 
-and [Apache Camel](http://camel.apache.org/). Both project
-provide a detailed documentation on how to work with such
-project.
+Yellow Lite is built using [Spring Boot](https://projects.spring.io/spring-boot/) 
+and [Apache Camel](http://camel.apache.org/). Both projects
+provide a extensive documentation on how to use or enhance
+such programs.
 
 To run Yellow Lite using only [Maven](http://maven.apache.org): 
 
@@ -71,7 +71,7 @@ flexible time/date based triggers.
 To use [gphoto](http://www.gphoto.org/) as the image source, you need to install
 it first: `sudo apt-get install gphoto2`.
 
-We strongly recommend using ghoto to take images. While developing you may
+We strongly recommend using ghoto2 to take images. While developing you may
 want to use your webcam to take test images. This requires streamer: 
 `sudo apt-get install streamer`.
 
