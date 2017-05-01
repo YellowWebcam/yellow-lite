@@ -1,8 +1,8 @@
 # Yellow Webcam Lite
 
-Yellow Webcam Lite turns your Raspberry PI and your DSLR into a 
-powerful webcam solution. Yellow Lite is released as Open Source software
-and therefore available free of charge for any usage.
+Yellow Webcam Lite turns your Raspberry PI and your DSLR into a powerful 
+webcam solution. Yellow Lite is released as Open Source software 
+(Apache 2.0 License) and therefore available free of charge for any usage.
 
 [avisec ag](https://www.avisec.ch/) runs the [Yellow Webcam solution](https://yellow.webcam/) 
 offering an end to end offering that includes consulting, weather-proof 
@@ -18,15 +18,17 @@ destinations.
 - [Teleport](https://www.teleport.nu)
 - [Panomax](https://www.panomax.com/)
 
-avisec runs a demo installation of Yellow Lite. 
-TODO: Link to blog post?
+We've compiled a series of tutorials to install and configure Yellow 
+Lite as a webcam controller on a Raspberry PI.
 
-- https://www.teleport.nu/feed/mankzyu4lfoaw2d4rqjk
-- https://avisec.panomax.com/test1
+- [Part I: Install Raspbian on a Raspberry PI](https://foto-webcam.shop/en/part-install-raspbian-raspberry-pi/)
+- [Part II: Install Yellow Lite on a Raspberry PI](https://foto-webcam.shop/en/part-ii-install-yellow-lite-raspberry-pi/)
+- [Part III: Configure Yellow Lite](https://foto-webcam.shop/en/part-iii-configure-yellow-lite/)
+- [Part IV: Automatically resize and crop images](https://foto-webcam.shop/en/part-iv-automatically-resize-crop-images/)
 
 ## Releases
 
-The first public release will follow shortly!
+Binary releases are available on [photo-webcam.shop/en/yellow-lite](https://foto-webcam.shop/en/yellow-lite/).
 
 ## Development
 
@@ -142,7 +144,3 @@ fill all parameters of the section.
     teleport.active=false
     teleport.user=
     teleport.password=
-
-## Installation
-
-TODO: Link to the article describing the pi setup.
