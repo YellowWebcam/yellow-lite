@@ -95,8 +95,9 @@ public class YellowLite {
                 } else if (GPHOTO.equals(captureSource)) {
                     from("quartz2:dslr-trigger?cron={{capture.cron}}")
                             .log("taking a new slr image")
-                            .toD("exec:gphoto2?args=--capture-image-and-download --filename {{capture.folder}}/" + IMAGE_NAME + ".jpg")
-                            .log("image captured ${body}");
+                            .toD("exec:gphoto2?useStderrOnEmptyStdout=true&args=--capture-image-and-download --filename {{capture.folder}}/" + IMAGE_NAME + ".jpg")
+                            .log("gphoto2 returned: ${body}")
+                            .process().message(YellowLite.this::verifyCapturedImage);
                 } else {
                     LOG.error("No or unknown image source configured! Allowed values: " + Arrays.toString(SOURCES));
                 }
@@ -163,6 +164,13 @@ public class YellowLite {
             }
 
         };
+    }
+
+    private void verifyCapturedImage(Message message) {
+        String body =  message.getBody(String.class);
+        if(!body.contains("Saving file as")) {
+            LOG.error("No image captured!");
+        }
     }
 
     void setImageDateHeader(Message e) {
