@@ -1,13 +1,13 @@
 # Yellow Webcam Lite
 
-Yellow Webcam Lite turns your Raspberry PI and your DSLR into a powerful 
+Yellow Webcam Lite turns your Raspberry PI and your DSLR camera into a powerful 
 webcam solution. Yellow Lite is released as Open Source software 
 (Apache 2.0 License) and therefore available free of charge for any usage.
 
 [avisec ag](https://www.avisec.ch/) runs the [Yellow Webcam solution](https://yellow.webcam/) 
-offering an end to end offering that includes consulting, weather-proof 
-camera enclosings, privacy controls and anonymization of images, as well as 
-time lapse videos.
+offering an end to end service that includes consulting, weather-proof 
+camera casings, privacy control and anonymization of images, as well as 
+timelapse videos.
 
 Yellow Lite contains a limited set of functionality of the Yellow Webcam and 
 allows you to resize, crop, and publish your images to the following 
@@ -34,8 +34,10 @@ Binary releases are available on [photo-webcam.shop/en/yellow-lite](https://phot
 
 Yellow Lite is built using [Spring Boot](https://projects.spring.io/spring-boot/) 
 and [Apache Camel](http://camel.apache.org/). Both projects
-provide a extensive documentation on how to use or enhance
+provide extensive documentation on how to use or enhance
 such programs.
+
+You will have to create a configuration file to successfuly start yellow lite (see "configuration" below).
 
 To run Yellow Lite using only [Maven](http://maven.apache.org): 
 
@@ -46,7 +48,7 @@ To package and start the application:
     mvn package
     java -jar target/yellow-lite-1.0-SNAPSHOT.jar
 
-We're welcoming you to create pull requests or bug reports to
+We appreciate pull requests or bug reports to
 improve Yellow Lite.
 
 ## Configuration
@@ -60,7 +62,7 @@ the project root folder.
 
 ### Reference
 
-Images are captured triggered by a Cron expression. Cron allows
+Images are triggered by a Cron expression. Cron allows
 flexible time/date based triggers.
 
     # see http://www.quartz-scheduler.org/documentation/quartz-2.x/tutorials/crontrigger#format
@@ -86,8 +88,8 @@ to retain the image proportions.
     image.resize.height=
 
 Crop an image to a new height/width. Height/width must be smaller than
-the resized (or original) image. X/Y define the coordinated of the
-top left corner of the bounding box used for cropping.
+the resized (or original) image. X/Y define the coordinates of the
+upper left corner of the bounding box used for cropping.
 
     image.crop.x=
     image.crop.y=
@@ -96,7 +98,7 @@ top left corner of the bounding box used for cropping.
 
 As soon as you crop or resize the image, it will be loaded into memory 
 and converted back into the jpg format. By default a compression of 90%
-will be used. A smaller value will result in a smaller files. A value of 
+will be used. A smaller value will result in smaller files. A value of 
 100 will not compress the image. 
 
     # set quality to 90% after cropping/resizing the image
