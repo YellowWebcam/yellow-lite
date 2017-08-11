@@ -15,7 +15,7 @@ destinations.
 
 - Your FTP or SFTP server
 - [Amazon S3](https://aws.amazon.com/s3/)
-- [Teleport](https://www.teleport.nu)
+- [Teleport](https://www.teleport.io)
 - [Panomax](https://www.panomax.com/)
 
 We've compiled a series of tutorials to install and configure Yellow 

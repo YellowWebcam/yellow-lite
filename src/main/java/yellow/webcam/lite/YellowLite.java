@@ -158,8 +158,8 @@ public class YellowLite {
                 if (teleportActive) {
                     from("direct:upload-teleport")
                             .setHeader(Exchange.FILE_NAME, constant("image.jpg"))
-                            .to("ftp://{{teleport.user}}@ftp.teleport.nu?password={{teleport.password}}" + FTP_OPTIONS)
-                            .log("FTP upload to ftp.teleport.nu finished");
+                            .to("ftp://{{teleport.user}}@ftp.teleport.io?password={{teleport.password}}" + FTP_OPTIONS)
+                            .log("FTP upload to ftp.teleport.io finished");
                 }
             }
 
