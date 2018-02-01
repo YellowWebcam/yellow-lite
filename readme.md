@@ -21,10 +21,14 @@ destinations.
 We've compiled a series of tutorials to install and configure Yellow 
 Lite as a webcam controller on a Raspberry PI.
 
-- [Part I: Install Raspbian on a Raspberry PI](https://photo-webcam.shop/part-install-raspbian-raspberry-pi/)
-- [Part II: Install Yellow Lite on a Raspberry PI](https://photo-webcam.shop/part-ii-install-yellow-lite-raspberry-pi/)
-- [Part III: Configure Yellow Lite](https://photo-webcam.shop/part-iii-configure-yellow-lite/)
-- [Part IV: Automatically resize and crop images](https://photo-webcam.shop/part-iv-automatically-resize-crop-images/)
+- Part I: Install Raspbian on a Raspberry PI
+- Part II: Install Yellow Lite on a Raspberry PI
+- Part III: Configure Yellow Lite
+- Part IV: Automatically resize and crop images
+
+All tutorials are available in the [avisec wiki](https://avisec.atlassian.net/wiki/spaces/YD/pages/10977379/yellow+lite).
+
+The hardware can be purchased in the [photo-webcam.shop](https://photo-webcam.shop/).
 
 ## Releases
 
